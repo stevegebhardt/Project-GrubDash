@@ -36,12 +36,13 @@ const hasMobileNum = (req, res, next) => {
 };
 
 const hasDishes = (req, res, next) => {
-  const { data: { dishes } = {} } = req.body;
-
-  if (typeof dishes !== array || dishes.length === 0) {
+  const { data: { dishes } = [] } = req.body;
+  console.log(Array.isArray(dishes));
+  const isArray = Array.isArray(dishes);
+  if (isArray === false) {
     next({
       status: 400,
-      message: "Order must include at least one dish",
+      message: "Order must include at least 1 dish",
     });
   } else if (!dishes) {
     next({
@@ -53,9 +54,7 @@ const hasDishes = (req, res, next) => {
 
 const hasQuantity = (req, res, next) => {
   const { data: { dishes } = [] } = req.body;
-  const positiveQuantity = dishes.filter((dish) => dish.quantity > 0);
-
-  if (!positiveQuantity) {
+  if (!dishes) {
     next({
       status: 400,
       message: `Dish ${index} must have a quantity that is an integer greater than 0`,
@@ -78,7 +77,8 @@ const create = (req, res, next) => {
 
 const read = (req, res, next) => {
   const { orderId } = req.params;
-  const foundOrder = orders.find((order) => order.id === Number(orderId));
+  const foundOrder = orders.find((order) => order.id === orderId);
+
   if (foundOrder) {
     res.json({ data: foundOrder });
   }
@@ -89,7 +89,7 @@ const read = (req, res, next) => {
 
 const updateOrder = (req, res, next) => {
   const { orderId } = req.params;
-  const foundOrder = orders.find((order) => order.id === Number(orderId));
+  const foundOrder = orders.find((order) => order.id === orderId);
 
   const { data: { id, deliverTo, mobileNumber, status, dishes } = {} } =
     req.body;

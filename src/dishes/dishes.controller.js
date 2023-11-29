@@ -75,7 +75,7 @@ const hasImage = (req, res, next) => {
 
 const read = (req, res, next) => {
   const { dishId } = req.params;
-  const foundDish = dishes.find((dish) => dish.id === Number(dishId));
+  const foundDish = dishes.find((dish) => dish.id === dishId);
 
   if (foundDish) {
     res.json({ data: foundDish });
@@ -87,11 +87,12 @@ const read = (req, res, next) => {
 
 const updateDish = (req, res, next) => {
   const { dishId } = req.params;
-  const foundDish = dishes.find((dish) => dish.id === Number(dishId));
+  const foundDish = dishes.find((dish) => dish.id === dishId);
   const { data: { id, name, description, price, image_url } = {} } = req.body;
 
   if (id !== foundDish.id) {
     next({
+      status: 400,
       message: `Dish id does not match route id. Dish: ${id}, Route: ${dishId}`,
     });
   } else if (foundDish) {
