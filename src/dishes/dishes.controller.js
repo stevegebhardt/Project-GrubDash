@@ -32,7 +32,7 @@ const hasName = (req, res, next) => {
   if (name && name.length > 0) {
     return next();
   }
-  next({
+  return next({
     status: 400,
     message: "Dish must include a name",
   });
@@ -44,7 +44,7 @@ const hasDescription = (req, res, next) => {
   if (description && description.length > 0) {
     return next();
   }
-  next({
+  return next({
     status: 400,
     message: "Dish must include a description",
   });
@@ -52,11 +52,10 @@ const hasDescription = (req, res, next) => {
 
 const hasPrice = (req, res, next) => {
   const { data: { price } = {} } = req.body;
-
-  if (price && price.valueOf() > 0) {
+  if (Number.isInteger(price) && price > 0) {
     return next();
   }
-  next({
+  return next({
     status: 400,
     message: "Dish must have a price that is an integer greater than 0",
   });
@@ -67,7 +66,7 @@ const hasImage = (req, res, next) => {
   if (image_url && image_url.length > 0) {
     return next();
   }
-  next({
+  return next({
     status: 400,
     message: "Dish must include a image_url",
   });
@@ -78,34 +77,49 @@ const read = (req, res, next) => {
   const foundDish = dishes.find((dish) => dish.id === dishId);
 
   if (foundDish) {
-    res.json({ data: foundDish });
+    return res.json({ data: foundDish });
   }
-  next({
+  return next({
     status: 404,
   });
 };
 
-const updateDish = (req, res, next) => {
+const dishExists = (req, res, next) => {
+  const { dishId } = req.params;
+  const foundDish = dishes.find((dish) => dish.id === dishId);
+  if (foundDish) {
+    return next();
+  }
+  return next({
+    status: 404,
+    message: `Dish does not exist: ${dishId}.`,
+  });
+};
+
+const matchingIds = (req, res, next) => {
+  const { dishId } = req.params;
+  const { data: { id } = {} } = req.body;
+
+  if (!id || id === dishId) {
+    return next();
+  }
+  return next({
+    status: 400,
+    message: `Dish id does not match route id. Dish: ${id}, Route: ${dishId}`,
+  });
+};
+
+const update = (req, res, next) => {
   const { dishId } = req.params;
   const foundDish = dishes.find((dish) => dish.id === dishId);
   const { data: { id, name, description, price, image_url } = {} } = req.body;
 
-  if (id !== foundDish.id) {
-    next({
-      status: 400,
-      message: `Dish id does not match route id. Dish: ${id}, Route: ${dishId}`,
-    });
-  } else if (foundDish) {
+  if (foundDish) {
     foundDish.name = name;
     foundDish.description = description;
     foundDish.price = price;
     foundDish.image_url = image_url;
     res.json({ data: foundDish });
-  } else {
-    next({
-      status: 404,
-      message: `Dish does not exist: ${dishId}.`,
-    });
   }
 };
 
@@ -113,5 +127,13 @@ module.exports = {
   list,
   create: [hasName, hasDescription, hasPrice, hasImage, create],
   read,
-  updateDish: [hasName, hasDescription, hasPrice, hasImage, updateDish],
+  update: [
+    dishExists,
+    matchingIds,
+    hasName,
+    hasDescription,
+    hasPrice,
+    hasImage,
+    update,
+  ],
 };
